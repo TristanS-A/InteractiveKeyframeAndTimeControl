@@ -54,7 +54,31 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-1: IMPLEMENT ME
 //-----------------------------------------------------------------------------
+		
 		//1. time step
+		clipCtrl->clipTime_sec += dt;
+
+		//a.pause dt = 0
+		if (dt == 0)
+		{
+			return 0;
+		}
+
+		a3boolean isPlayingReversed = dt < 0; //IDK why we can't use a regular bool
+
+		if (clipCtrl->clipTime_sec >= clipCtrl->clip->duration_sec)
+		{
+			//Just clamp to end and return -1 for now
+			clipCtrl->clipTime_sec = clipCtrl->clip->duration_sec;
+			return -1;
+		}
+		else if (clipCtrl->clipTime_sec <= 0)
+		{
+			//Just clamp to begining and return -1 for now
+			clipCtrl->clipTime_sec = 0;
+			return -1;
+		}
+
 		//2. resolve key frame
 		//		a. pause dt = 0
 		//		b. forward dt > 0
