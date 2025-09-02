@@ -66,18 +66,32 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 
 		a3boolean isPlayingReversed = dt < 0; //IDK why we can't use a regular bool
 
-		if (clipCtrl->clipTime_sec >= clipCtrl->clip->duration_sec)
+		//Make sure clip time is within clip bounds
+		if (clipCtrl->clipTime_sec > clipCtrl->clip->duration_sec)
 		{
-			//Just clamp to end and return -1 for now
+			//Just clamp to end for now
 			clipCtrl->clipTime_sec = clipCtrl->clip->duration_sec;
-			return -1;
 		}
-		else if (clipCtrl->clipTime_sec <= 0)
+		else if (clipCtrl->clipTime_sec < 0)
 		{
-			//Just clamp to begining and return -1 for now
+			//Just clamp to begining for now
 			clipCtrl->clipTime_sec = 0;
-			return -1;
 		}
+
+		//NEED TO CALCULATE THIS
+		float keyFrameStartTime_T0;
+		float keyFrameEndTime_T1;
+
+		//Find current keyframe (ONLY HANDLES FORWARD PLAYING LOGIC RIGHT NOW)
+		while (clipCtrl->clipTime_sec >= keyFrameEndTime_T1 || clipCtrl->clipTime_sec < keyFrameStartTime_T0)
+		{
+			keyFrameStartTime_T0 = keyFrameEndTime_T1;
+			clipCtrl->keyframeIndex++;  //The locked forward playing logic
+			keyFrameEndTime_T1 += clipCtrl->keyframe[clipCtrl->keyframeIndex].duration_sec;
+		}
+
+		//Get normalized time in current keyframe
+		clipCtrl->keyframeTime_sec = (clipCtrl->clipTime_sec - keyFrameStartTime_T0) / (keyFrameEndTime_T1 - keyFrameStartTime_T0);
 
 		//2. resolve key frame
 		//		a. pause dt = 0
