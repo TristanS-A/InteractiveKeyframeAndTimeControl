@@ -83,14 +83,14 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		}
 
 		//take the current time and subtrack the duration?
-		float keyFrameDuration = (float)(clipCtrl->clipPool->keyframe[clipCtrl->keyframeIndex].duration_sec);
+		float keyFrameDuration = (float)(clipCtrl->keyframe[clipCtrl->keyframeIndex].duration_sec);
 		float keyFrameStartTime_T0 = 0;
 
 		//This might calcualte keyframeTime_sec
 		//REFACTOR THIS TO USE KEYFRAME TIME so we don't have to iterate through the whole array to find new keyframe start time
 		for (a3ui32 i = 0; i < clipCtrl->keyframeIndex; i++)
 		{
-			keyFrameStartTime_T0 += (float)(clipCtrl->clipPool->keyframe[i].duration_sec);
+			keyFrameStartTime_T0 += (float)(clipCtrl->keyframe[i].duration_sec);
 		}
 
 		float keyFrameEndTime_T1 = (float)(keyFrameStartTime_T0 + keyFrameDuration);
@@ -104,17 +104,18 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			{	
 				keyFrameStartTime_T0 = keyFrameEndTime_T1;
 				keyFrameEndTime_T1 += (float)(clipCtrl->keyframe[clipCtrl->keyframeIndex].duration_sec);
+				//reset keyframe time becasue new keyframe
+				clipCtrl->keyframeTime_sec = 0;
 			}
 			else //goes past the end of the keyframes--this is prob all wrong lol!
 			{
 				clipCtrl->keyframeIndex = 0;
-				keyFrameEndTime_T1 = (float)(clipCtrl->clipPool->keyframe[0].duration_sec);
+				keyFrameEndTime_T1 = (float)(clipCtrl->keyframe[0].duration_sec);
 				keyFrameStartTime_T0 = 0;
 				clipCtrl->clipTime_sec = 0;
+				clipCtrl->keyframeTime_sec = 0;
 			}
 			
-			//reset keyframe time becasue new keyframe
-			clipCtrl->keyframeTime_sec = 0;
 		}
 		//Get normalized time in current keyframe with in key frame
 		clipCtrl->keyframeParam = (clipCtrl->clipTime_sec - keyFrameStartTime_T0) / (keyFrameEndTime_T1 - keyFrameStartTime_T0);
