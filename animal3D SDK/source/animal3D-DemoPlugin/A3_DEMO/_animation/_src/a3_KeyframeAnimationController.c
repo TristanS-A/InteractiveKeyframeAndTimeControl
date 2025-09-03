@@ -58,7 +58,7 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		//1. time step
 		clipCtrl->clipTime_sec += dt;
 		//advance the time of the keyframe
-		clipCtrl->keyframeTime_sec += dt;
+		//clipCtrl->keyframeTime_sec += dt;
 
 		//a.pause dt = 0
 		if (dt == 0)
@@ -72,8 +72,8 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		//Make sure clip time is within clip bounds
 		if (clipCtrl->clipTime_sec > clipDuration)
 		{
-			//Just clamp to end for now
-			clipCtrl->clipTime_sec = clipCtrl->clip->duration_sec;
+			//Just clamp to end for now --> loops
+			clipCtrl->clipTime_sec = clipCtrl->clipTime_sec - clipDuration;
 		}
 		else if (clipCtrl->clipTime_sec < 0)
 		{
@@ -83,16 +83,15 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		}
 
 		
-		//NEED TO CALCULATE THIS
-
 		//take the current time and subtrack the duration?
 		float keyFrameDuration = (float)(clipCtrl->clipPool->keyframe[clipCtrl->keyframeIndex].duration_sec);
 		float keyFrameStartTime_T0 = 0;
 
 		//This might calcualte keyframeTime_sec
-		for (a3ui32 i = clipCtrl->keyframeIndex; i > 0; i--)
+		//REFACTOR THIS TO USE KEYFRAME TIME so we don't have to iterate through the whole array to find new keyframe start time
+		for (a3ui32 i = 0; i < clipCtrl->keyframeIndex; i++)
 		{
-			keyFrameStartTime_T0 += (float)(clipCtrl->clipPool->keyframe[i - 1].duration_sec);
+			keyFrameStartTime_T0 += (float)(clipCtrl->clipPool->keyframe[i].duration_sec);
 		}
 
 		float keyFrameEndTime_T1 = (float)(keyFrameStartTime_T0 + keyFrameDuration);
@@ -100,25 +99,30 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		//Find current keyframe (ONLY HANDLES FORWARD PLAYING LOGIC RIGHT NOW)
 		while (clipCtrl->clipTime_sec >= keyFrameEndTime_T1 || clipCtrl->clipTime_sec < keyFrameStartTime_T0)
 		{
-			keyFrameStartTime_T0 = keyFrameEndTime_T1;
 			clipCtrl->keyframeIndex++;  //The locked forward playing logic
-			keyFrameEndTime_T1 += (float)(clipCtrl->keyframe[clipCtrl->keyframeIndex].duration_sec);
-			//goes past the end of the player--this is prob all wrong lol!
-			if (clipCtrl->keyframeIndex > clipCtrl->clipPool->keyframeCount)
+
+			if ((a3i32)clipCtrl->keyframeIndex < clipCtrl->clip->keyframeCount)
+			{	
+				keyFrameStartTime_T0 = keyFrameEndTime_T1;
+				keyFrameEndTime_T1 += (float)(clipCtrl->keyframe[clipCtrl->keyframeIndex].duration_sec);
+			}
+			else //goes past the end of the keyframes--this is prob all wrong lol!
 			{
 				clipCtrl->keyframeIndex = 0;
-				keyFrameEndTime_T1 = (float)(clipCtrl->keyframe->duration_sec);
+				keyFrameEndTime_T1 = (float)(clipCtrl->clipPool->keyframe[0].duration_sec);
 				keyFrameStartTime_T0 = 0;
-				clipCtrl->clipTime_sec = 0;
+				clipCtrl->clipTime_sec = clipCtrl->clipTime_sec - clipDuration;
 			}
 			
 			//reset keyframe time becasue new keyframe
 			clipCtrl->keyframeTime_sec = 0;
 		}
 		//Get normalized time in current keyframe with in key frame
-		clipCtrl->keyframeParam = (clipCtrl->keyframeTime_sec - 0) / (keyFrameDuration - 0);
+		clipCtrl->keyframeParam = (clipCtrl->clipTime_sec - keyFrameStartTime_T0) / (keyFrameEndTime_T1 - keyFrameStartTime_T0);
+
 		//with in clip
-		clipCtrl->clipParam = (clipCtrl->clipTime_sec - 0) / (clipCtrl->clip->duration_sec - 0);
+		clipCtrl->clipParam = (clipCtrl->clip->duration_sec - clipCtrl->clipTime_sec) / (clipCtrl->clip->duration_sec);
+
 		//2. resolve key frame
 		//		a. pause dt = 0
 		//		b. forward dt > 0
