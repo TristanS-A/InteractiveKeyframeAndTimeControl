@@ -82,6 +82,20 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			clipCtrl->clipTime_sec = clipDuration + clipCtrl->clipTime_sec;
 		}
 
+		//Finds correct current keyframe
+		/*float keyFrameStartTime_T0 = 0;
+		clipCtrl->keyframeIndex = 0;
+		for (int i = clipCtrl->clip->keyframeIndex_first; i <= clipCtrl->clip->keyframeIndex_final; i++)
+		{
+			if (keyFrameStartTime_T0 + (float)clipCtrl->keyframe[i].duration_sec > (float)clipCtrl->clipTime_sec)
+			{
+				clipCtrl->keyframeIndex = i;
+				break;
+			}
+
+			keyFrameStartTime_T0 += (float)clipCtrl->keyframe[i].duration_sec;
+		}*/
+
 		//take the current time and subtrack the duration?
 		float keyFrameDuration = (float)(clipCtrl->keyframe[clipCtrl->keyframeIndex].duration_sec);
 		float keyFrameStartTime_T0 = 0;
