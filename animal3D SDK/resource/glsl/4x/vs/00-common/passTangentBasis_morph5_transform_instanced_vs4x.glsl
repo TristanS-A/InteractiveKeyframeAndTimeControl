@@ -30,7 +30,22 @@ struct sMorphTarget
 {
 	vec4 mPosition, mNormal, mTangent;
 };
-layout (location = 0) in sMorphTarget aMorphTarget[5];
+//layout (location = 0) in sMorphTarget aMorphTarget[5];
+layout (location =  0) in vec4 aMorphTarget0_mPosition;
+layout (location =  1) in vec4 aMorphTarget0_mNormal;
+layout (location =  2) in vec4 aMorphTarget0_mTangent;
+layout (location =  3) in vec4 aMorphTarget1_mPosition;
+layout (location =  4) in vec4 aMorphTarget1_mNormal;
+layout (location =  5) in vec4 aMorphTarget1_mTangent;
+layout (location =  6) in vec4 aMorphTarget2_mPosition;
+layout (location =  7) in vec4 aMorphTarget2_mNormal;
+layout (location =  8) in vec4 aMorphTarget2_mTangent;
+layout (location =  9) in vec4 aMorphTarget3_mPosition;
+layout (location = 10) in vec4 aMorphTarget3_mNormal;
+layout (location = 11) in vec4 aMorphTarget3_mTangent;
+layout (location = 12) in vec4 aMorphTarget4_mPosition;
+layout (location = 13) in vec4 aMorphTarget4_mNormal;
+layout (location = 14) in vec4 aMorphTarget4_mTangent;
 layout (location = 15) in vec4 aTexcoord;
 
 uniform mat4 uP;
@@ -71,6 +86,14 @@ void CatmullRom(out sMorphTarget k, in sMorphTarget kP, in sMorphTarget k0, in s
 }
 
 
+void makeMorphTarget(out sMorphTarget k, in vec4 position, in vec4 normal, in vec4 tangent)
+{
+	k.mPosition = position;
+	k.mNormal = normal;
+	k.mTangent = tangent;
+}
+
+
 void main()
 {
 	// DUMMY OUTPUT: directly assign input position to output position
@@ -84,9 +107,16 @@ void main()
 	int iP = (i0 + 4) % 5;
 	
 	sMorphTarget k;
+	sMorphTarget aMorphTarget[5];
+	makeMorphTarget(aMorphTarget[0], aMorphTarget0_mPosition, aMorphTarget0_mNormal, aMorphTarget0_mTangent);
+	makeMorphTarget(aMorphTarget[1], aMorphTarget1_mPosition, aMorphTarget1_mNormal, aMorphTarget1_mTangent);
+	makeMorphTarget(aMorphTarget[2], aMorphTarget2_mPosition, aMorphTarget2_mNormal, aMorphTarget2_mTangent);
+	makeMorphTarget(aMorphTarget[3], aMorphTarget3_mPosition, aMorphTarget3_mNormal, aMorphTarget3_mTangent);
+	makeMorphTarget(aMorphTarget[4], aMorphTarget4_mPosition, aMorphTarget4_mNormal, aMorphTarget4_mTangent);
 	//k = aMorphTarget[i0];
 	//lerp(k, aMorphTarget[i0], aMorphTarget[i1], u);
 	CatmullRom(k, aMorphTarget[iP], aMorphTarget[i0], aMorphTarget[i1], aMorphTarget[iN], u);
+	//makeMorphTarget(k, aMorphTarget0_mPosition, aMorphTarget0_mNormal, aMorphTarget0_mTangent);
 	vec4 aPosition = k.mPosition;
 	vec4 aNormal = k.mNormal;
 	vec4 aTangent = k.mTangent;

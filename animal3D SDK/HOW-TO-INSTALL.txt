@@ -21,6 +21,7 @@ You can achieve all of these steps via the command prompt or interface of your c
 	git submodule update
 
 4. Checkout starter branch and navigate to framework root (change 'dev' to the branch you want to be active; e.g. 'dev-anim-1'): 
+	git fetch
 	git checkout dev
 	cd animal3D*
 
