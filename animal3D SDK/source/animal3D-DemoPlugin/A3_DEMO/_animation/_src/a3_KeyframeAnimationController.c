@@ -26,6 +26,8 @@
 
 #include <string.h>
 
+#include <assert.h>
+
 
 // macros to help with names
 #define A3_CLIPCTRL_DEFAULTNAME		("unnamed clip ctrl")
@@ -55,60 +57,114 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 //****TO-DO-ANIM-PROJECT-1: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 		
-		//1. time step
-		clipCtrl->clipTime_sec += dt;
-		//advance the time of the keyframe
-
-		//a.pause dt = 0
+		////Handles pause
 		if (dt == 0)
 		{
 			return 0;
 		}
 
-		//a3boolean isPlayingReversed = dt < 0; //IDK why we can't use a regular bool
+		////Updates clip time
+		clipCtrl->clipTime_sec += dt * clipCtrl->playback_sec;
 
 		a3f64 clipDuration = (clipCtrl->clip->duration_sec);
 
-		//Make sure clip time is within clip bounds
+		////Handles transitions
+
+		//For forward transition if clip time exceeds clip duration
 		if (clipCtrl->clipTime_sec > clipDuration)
 		{
-			//Just clamp to end for now --> loops
-			clipCtrl->clipTime_sec = clipCtrl->clipTime_sec - clipDuration;
+			a3f64 overflowTime = clipCtrl->clipTime_sec - clipDuration;
+
+			//Accounts for overflow time steps that are longer than the clip duration
+			while (overflowTime > clipDuration)
+			{
+				overflowTime -= clipDuration;
+			}
+
+			switch (clipCtrl->clip->transitionForward[0].flag)
+			{
+				case a3clip_stopFlag:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
+					clipCtrl->clipTime_sec = clipDuration;
+					clipCtrl->keyframeParam = 1.0;
+					clipCtrl->clipParam = 1.0;
+					return 0;
+					break;
+				case a3clip_playFlag:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
+					clipCtrl->clipTime_sec = overflowTime;
+					break;
+				case a3clip_reverseFlag:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
+					clipCtrl->clipTime_sec = clipDuration - overflowTime;
+					clipCtrl->playback_sec *= -1;
+					break;
+				default:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
+					clipCtrl->clipTime_sec = overflowTime;
+					break;
+			}
+
 		}
-		else if (clipCtrl->clipTime_sec < 0)
+		else if (clipCtrl->clipTime_sec < 0)  //For reverse transition if clip time goes below 0
 		{
-			//Just clamp to begining for now --> loop
-			clipCtrl->clipTime_sec = clipDuration + clipCtrl->clipTime_sec;
-			clipCtrl->keyframeIndex = clipCtrl->clip->keyframeCount;
+			a3f64 overflowTime = -clipCtrl->clipTime_sec;
+
+			//Accounts for overflow time steps that are longer than the clip duration
+			while (overflowTime > clipDuration)
+			{
+				overflowTime -= clipDuration;
+			}
+
+			switch (clipCtrl->clip->transitionReverse[0].flag)
+			{
+				case a3clip_stopFlag:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
+					clipCtrl->clipTime_sec = 0;
+					clipCtrl->keyframeParam = 0;
+					clipCtrl->clipParam = 0;
+					return 0;
+					break;
+				case a3clip_playFlag:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
+					clipCtrl->clipTime_sec = clipDuration - overflowTime;
+					break;
+				case a3clip_reverseFlag:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
+					clipCtrl->clipTime_sec = overflowTime;
+					clipCtrl->playback_sec *= -1;
+					break;
+				default:
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
+					clipCtrl->clipTime_sec = clipDuration - overflowTime;
+					break;
+			}
 		}
 
-		//take the current time and subtrack the duration?
+		////Finds current keyframe based on transitions and updated clip time
+
+		//Picks a starting keyframe
 		a3f64 keyFrameStartTime_T0 = clipCtrl->clipPool->sample[clipCtrl->keyframe[clipCtrl->keyframeIndex].sampleIndex0].time_sec;
 		a3f64 keyFrameEndTime_T1 = clipCtrl->clipPool->sample[clipCtrl->keyframe[clipCtrl->keyframeIndex].sampleIndex1].time_sec;
 
-		//Find current keyframe (ONLY HANDLES FORWARD PLAYING LOGIC RIGHT NOW)
+		//Makes sure it is the current keyframe
 		while (clipCtrl->clipTime_sec >= keyFrameEndTime_T1 || clipCtrl->clipTime_sec < keyFrameStartTime_T0)
 		{
-			clipCtrl->keyframeIndex++;  //The locked forward playing logic
+			clipCtrl->playback_sec > 0 ? clipCtrl->keyframeIndex++ : clipCtrl->keyframeIndex--;
 
 			if ((a3i32)clipCtrl->keyframeIndex < clipCtrl->clip->keyframeCount)
 			{	
 				keyFrameStartTime_T0 = clipCtrl->clipPool->sample[clipCtrl->keyframe[clipCtrl->keyframeIndex].sampleIndex0].time_sec;
-				keyFrameEndTime_T1 += clipCtrl->clipPool->sample[clipCtrl->keyframe[clipCtrl->keyframeIndex].sampleIndex1].time_sec;
+				keyFrameEndTime_T1 = clipCtrl->clipPool->sample[clipCtrl->keyframe[clipCtrl->keyframeIndex].sampleIndex1].time_sec;
 			}
-			else //goes past the end of the keyframes--this is prob all wrong lol!
-			{
-				keyFrameEndTime_T1 = (clipCtrl->keyframe[0].duration_sec);
-				keyFrameStartTime_T0 = 0;
-				clipCtrl->keyframeIndex = 0;
-			}
+
+			////Don't need to account for if index goes out of range here since that is done in the transitions section
 			
 		}
-		//Get normalized time in current keyframe with in key frame
-		clipCtrl->keyframeParam = (clipCtrl->clipTime_sec - keyFrameStartTime_T0) * clipCtrl->keyframe[clipCtrl->keyframeIndex].durationInv;
 
-		//with in clip
-		clipCtrl->clipParam = (clipCtrl->clip->duration_sec - clipCtrl->clipTime_sec) * clipCtrl->clip->durationInv;
+		////Gets normalized time for current keyframe and clip
+		clipCtrl->keyframeParam = (clipCtrl->clipTime_sec - keyFrameStartTime_T0) * clipCtrl->keyframe[clipCtrl->keyframeIndex].durationInv;
+		clipCtrl->clipParam = clipCtrl->clip->duration_sec * clipCtrl->clip->durationInv;
 
 		//2. resolve key frame
 		//		a. pause dt = 0
