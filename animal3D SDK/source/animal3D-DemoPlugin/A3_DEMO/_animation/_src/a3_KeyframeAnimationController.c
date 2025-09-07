@@ -95,11 +95,10 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 					clipCtrl->clipTime_sec = overflowTime;
 					break;
 				case a3clip_reverseFlag:
-					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
-					clipCtrl->clipTime_sec = clipDuration - overflowTime;
-					clipCtrl->playback_sec *= -1;
+					//Impliment ping pong
 					break;
 				default:
+					//Default is loop
 					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
 					clipCtrl->clipTime_sec = overflowTime;
 					break;
@@ -130,11 +129,10 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 					clipCtrl->clipTime_sec = clipDuration - overflowTime;
 					break;
 				case a3clip_reverseFlag:
-					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
-					clipCtrl->clipTime_sec = overflowTime;
-					clipCtrl->playback_sec *= -1;
+					//Impliment ping pong
 					break;
 				default:
+					//Default is loop
 					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
 					clipCtrl->clipTime_sec = clipDuration - overflowTime;
 					break;
