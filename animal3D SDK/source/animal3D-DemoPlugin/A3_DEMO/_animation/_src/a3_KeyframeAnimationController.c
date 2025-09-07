@@ -55,7 +55,76 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 //****TO-DO-ANIM-PROJECT-1: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+		// variables
+		a3f64 overstep;
 
+		// time step
+		dt *= clipCtrl->playback_sec;
+		clipCtrl->clipTime_sec += dt;
+		clipCtrl->keyframeTime_sec += dt;
+		//dt *= clipCtrl->playback_stepPerSec;
+		//clipCtrl->clipTime_step += (a3i32)dt;
+		//clipCtrl->keyframeTime_step += (a3i32)dt;
+
+		// resolve forward
+		while ((overstep = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec) >= 0.0)
+		{
+			// are we passing the forward terminus of the clip
+			if (clipCtrl->keyframeIndex == clipCtrl->clip->keyframeIndex_final)
+			{
+				// handle forward transition
+
+				// default testing behavior: loop with overstep
+				clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+				clipCtrl->keyframeTime_sec = overstep;
+			}
+			// are we simply moving to the next keyframe
+			else
+			{
+				// set keyframe indices
+				clipCtrl->keyframeIndex += clipCtrl->clip->keyframeDirection;
+
+				// set keyframe pointers
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+
+				// new time is just the overstep
+				clipCtrl->keyframeTime_sec = overstep;
+			}
+		}
+
+		// resolve reverse
+		while ((overstep = clipCtrl->keyframeTime_sec) < 0.0)
+		{
+			// are we passing the reverse terminus of the clip
+			if (clipCtrl->keyframeIndex == clipCtrl->clip->keyframeIndex_first)
+			{
+				// handle reverse transition
+
+				// default testing behavior: loop with overstep
+				clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+				clipCtrl->keyframeTime_sec = overstep + clipCtrl->keyframe->duration_sec;
+			}
+			// are we simply moving to the previous keyframe
+			else
+			{
+				clipCtrl->keyframeIndex -= clipCtrl->clip->keyframeDirection;
+
+				// set keyframe pointers
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+
+				// new time is overstep (negative) from new duration
+				clipCtrl->keyframeTime_sec = overstep + clipCtrl->keyframe->duration_sec;
+			}
+		}
+
+		// normalize
+		clipCtrl->keyframeParam = clipCtrl->keyframeTime_sec * clipCtrl->keyframe->durationInv;
+		clipCtrl->clipParam = clipCtrl->clipTime_sec * clipCtrl->clip->durationInv;
+
+		// done
+		return 1;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-1
