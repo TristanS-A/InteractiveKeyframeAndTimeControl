@@ -67,13 +67,63 @@ void a3demo_updateHierarchyGraphics(
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD UPDATE LOGIC
+//****TO-DO-ANIM-PREP-3: ADD UPDATE LOGIC
 //-----------------------------------------------------------------------------
 
+void a3animation_update_animation_skeletal(
+	a3_Scene_Animation* scene, a3f64 const dt,
+	a3boolean const updateIK)
+{
+	a3ui32 h = 0;
+	a3ui32 n = sizeof(scene->clipCtrl) / sizeof(*scene->clipCtrl);
 
+	a3_ClipController const* active_ctrl = scene->clipCtrl_idle_f;//change controller for different effect
+
+	a3_HierarchyState* activeHS_fk = scene->hierarchyState_skel_fk;
+	a3_HierarchyState* activeHS_ik = scene->hierarchyState_skel_ik;
+	a3_HierarchyState* activeHS = scene->hierarchyState_skel_final;
+	a3_HierarchyState const* baseHS = scene->hierarchyState_skel_base;
+	a3_HierarchyPoseGroup const* poseGroup = scene->hierarchyPoseGroup_skel;
+
+	// bail
+	if (!activeHS->hierarchy || !activeHS->hierarchy->nodes)
+		return;
+
+	// update all clip poses
+	for (h = 0; h < n; ++h)
+	{
+		a3_ClipController* clipCtrl_fk = &scene->clipCtrl[h];
+
+		// update clip controller, keyframe lerp
+		a3clipControllerUpdate(clipCtrl_fk, dt);
+	}
+
+	// resolve final FK state:
+	// interpolate to frame and run FK pipeline
+	{
+		a3ui32 sampleIndex0, sampleIndex1;
+		sampleIndex0 = scene->clipPool->keyframe[active_ctrl->keyframeIndex].sampleIndex0;
+		sampleIndex1 = scene->clipPool->keyframe[active_ctrl->keyframeIndex].sampleIndex1;
+		a3hierarchyPoseLerp(activeHS_fk->animPose,
+			poseGroup->hpose + sampleIndex0, poseGroup->hpose + sampleIndex1,
+			(a3real)active_ctrl->keyframeParam, activeHS_fk->hierarchy->numNodes);
+		a3kinematicsUpdateHierarchyStateFK(activeHS_fk, baseHS, poseGroup);
+	}
+
+	// resolve final state
+	// copy FK result
+	a3hierarchyPoseCopy(activeHS->animPose,	// dst: IK anim
+		activeHS_fk->animPose,				// src: FK anim
+	//	baseHS->animPose,					// src test: base anim (identity)
+		activeHS_fk->hierarchy->numNodes);
+
+	// finally, rerun FK pipeline (skinning optional)
+	a3kinematicsUpdateHierarchyStateFK(activeHS, baseHS, poseGroup);
+	a3kinematicsUpdateHierarchyStateSkin(activeHS, baseHS);
+}
 
 //-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
+//****END-TO-DO-PREP-3
 //-----------------------------------------------------------------------------
 
 
@@ -97,15 +147,7 @@ void a3animation_update_animation(
 	a3_Scene_Animation* scene, a3f64 const dt,
 	a3boolean const updateIK)
 {
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD UPDATE LOGIC
-//-----------------------------------------------------------------------------
-
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+	a3animation_update_animation_skeletal(scene, dt, updateIK);
 
 	a3animation_update_animation_other(scene, dt);
 }
@@ -192,13 +234,22 @@ void a3animation_update(a3_DemoState* demoState, a3_Scene_Animation* scene, a3f6
 	}
 	
 //-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD SKELETAL GRAPHICS UPDATE
+//****TO-DO-ANIM-PREP-4: ADD SKELETAL GRAPHICS UPDATE
 //-----------------------------------------------------------------------------
-	
 
+	// prepare and graphics data
+	{
+		a3ui32 const skeletonIndex = (a3ui32)(scene->obj_skeleton - scene->object_scene);
+		a3ui32 const max_mats = sizeof(scene->display_main.mvp_joint) / sizeof(a3mat4);
+		a3mat4 const mvp_obj = scene->matrixStack[skeletonIndex].modelViewProjectionMat;
+
+		a3demo_updateHierarchyGraphics(
+			scene->display_main.mvp_joint, scene->display_main.mvp_bone, scene->display_main.t_skin, scene->display_main.dq_skin,
+			max_mats, mvp_obj, scene->hierarchyState_skel_final);
+	}
 
 //-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
+//****END-TO-DO-PREP-4
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------

@@ -288,15 +288,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 			{
 				const a3_Hierarchy* hierarchy = NULL;
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: SELECT HIERARCHY
-//-----------------------------------------------------------------------------
-				
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+				hierarchy = demoState->scene_animation->hierarchy_skel;
 				
 				if (hierarchy && hierarchy->nodes)
 				{

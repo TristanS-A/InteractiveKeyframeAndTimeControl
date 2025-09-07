@@ -113,16 +113,8 @@ extern "C"
 	{
 		animation_ctrl_camera,
 		animation_ctrl_teapot,
-
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD OBJECTS
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+	
+		animation_ctrl_character,
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-3: ADD OBJECTS
@@ -147,15 +139,12 @@ extern "C"
 //****END-TO-DO-PREP-4
 //-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD DISPLAY HELPER
-//-----------------------------------------------------------------------------
-	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+	// display data for hierarchy drawing
+	typedef struct a3_HierarchyDisplayData
+	{
+		a3mat4 mvp_joint[128], mvp_bone[128], t_skin[128];
+		a3dualquat dq_skin[128];
+	} a3_HierarchyDisplayData;
 
 
 //-----------------------------------------------------------------------------
@@ -176,15 +165,16 @@ extern "C"
 		a3_HierarchyState sceneGraphState[1];
 		a3_SceneModelMatrixStack matrixStack[animationMaxCount_sceneObject];
 		
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD MORE CONTROLLERS
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+		// skeletal animation controllers
+		union {
+			a3_ClipController clipCtrl[3];
+			struct {
+				a3_ClipController
+					clipCtrl_idle_p[1],
+					clipCtrl_idle_m[1],
+					clipCtrl_idle_f[1];
+			};
+		};
 
 		// other animation controllers
 		a3_ClipController clipCtrl_morph[1];
@@ -193,15 +183,20 @@ extern "C"
 		// complete clip/keyframe/sample collection
 		a3_ClipPool clipPool[1];
 		
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD MORE HIERARCHY STATES
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+		// skeletal animation
+		union {
+			a3_HierarchyState hierarchyState_skel[4];
+			struct {
+				a3_HierarchyState
+					hierarchyState_skel_ik[1],
+					hierarchyState_skel_fk[1],
+					hierarchyState_skel_final[1],
+					hierarchyState_skel_base[1];
+			};
+		};
+		a3_Hierarchy hierarchy_skel[1];
+		a3_HierarchyPoseGroup hierarchyPoseGroup_skel[1];
+		a3_HierarchyDisplayData display_main;
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-4: ADD BLENDING
@@ -230,16 +225,10 @@ extern "C"
 					obj_skybox[1];
 				a3_SceneObject
 					obj_teapot[1];
-
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD OBJECTS
-//-----------------------------------------------------------------------------
-				
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+			
+				a3_SceneObject
+					obj_skeleton_ctrl[1],
+					obj_skeleton[1];
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-3: REPLACE AND ADD OBJECTS

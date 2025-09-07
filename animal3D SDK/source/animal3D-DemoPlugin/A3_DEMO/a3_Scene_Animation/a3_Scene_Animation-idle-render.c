@@ -102,15 +102,7 @@ void a3animation_render_controls(a3_DemoState const* demoState, a3_Scene_Animati
 		"CAMERA",
 		"TEAPOT",
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD OBJECTS
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+		"CHARACTER",
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-3: ADD OBJECTS
@@ -237,15 +229,8 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 		demoState->draw_unit_box,		// skybox
 		demoState->draw_node,			// teapot
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD SHORTCUTS
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+		demoState->draw_node,			// character root
+		demoState->draw_character_skin,	// skinned model
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-3: REPLACE AND ADD SHORTCUTS
@@ -266,15 +251,8 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 		demoState->tex_checker,			// skybox
 		demoState->tex_checker,			// teapot
 		
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD SHORTCUTS
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+		0,								// character control
+		demoState->tex_checker,			// skinned model
 		
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-3: REPLACE AND ADD SHORTCUTS
@@ -362,14 +340,17 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 	a3real4x4Product(projectionBiasMat.m, bias.m, projectionMat.m);
 	a3real4x4Product(projectionBiasMat_inv.m, projectionMatInv.m, unbias.m);
 	
+	a3ui32 const max_mats = sizeof(scene->display_main.mvp_joint) / sizeof(*scene->display_main.mvp_joint);
+	a3ui32 const n_joints = scene->hierarchyState_skel->hierarchy->numNodes;
+	
 //-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD INFO
+//****TO-DO-ANIM-PREP-4: ADD INFO
 //-----------------------------------------------------------------------------
 	
 
 
 //-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
+//****END-TO-DO-PREP-4
 //-----------------------------------------------------------------------------
 
 
@@ -443,15 +424,50 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 		case animation_renderPhong:
 			break;
 		}
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD CHARACTER MODEL
-//-----------------------------------------------------------------------------
 		
+		// draw skinned object
+		currentDemoProgram = demoState->prog_drawPhong_skin;
+		a3shaderProgramActivate(currentDemoProgram->program);
+		a3shaderUniformBufferActivate(demoState->ubo_transformBlend, 1);
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, projectionMat.mm);
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
+
+		for (currentSceneObject = scene->obj_skeleton, endSceneObject = scene->obj_skeleton;
+			currentSceneObject <= endSceneObject; ++currentSceneObject)
+		{
+			// send data and draw
+			j = (a3ui32)(currentSceneObject - scene->object_scene);
+			a3textureActivate(texture_dm[j], a3tex_unit00);
+			a3textureActivate(texture_dm[j], a3tex_unit01);
+			a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &j);
+
+			modelMat = scene->sceneGraphState->objectSpace->hpose_base[currentSceneObject->sceneGraphIndex].transformMat;
+
+			a3real4x4Product(modelViewMat.m, viewMat.m, modelMat.m);
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
+			a3scene_quickInvertTranspose_internal(modelViewMat.m);
+			modelViewMat.v3 = a3vec4_zero;
+
+			a3demo_uploadHierarchyGraphics(demoState->ubo_transformMVP, demoState->ubo_transformMVPB, demoState->ubo_transformBlend,
+				scene->display_main.mvp_joint, scene->display_main.mvp_bone, scene->display_main.t_skin, scene->display_main.dq_skin,
+				max_mats, n_joints);
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
+			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, orange);
+			a3vertexDrawableActivateAndRender(demoState->draw_character_skin);
+			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, sky);
+			a3vertexDrawableActivateAndRender(demoState->draw_character_skin_alt);
 
 
 //-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
+//****TO-DO-ANIM-PREP-4: ADD BLEND TARGETS
 //-----------------------------------------------------------------------------
+
+
+
+//-----------------------------------------------------------------------------
+//****END-TO-DO-PREP-4
+//-----------------------------------------------------------------------------
+		}
 
 		// draw morphing object
 		currentDemoProgram = demoState->prog_drawPhong_morph5;
@@ -489,7 +505,7 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, grey);
 			}
 			a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &j);
-			a3vertexDrawableActivateAndRender(currentDrawable);
+			//a3vertexDrawableActivateAndRender(currentDrawable);
 		}
 
 	}	break;
@@ -656,15 +672,34 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 				// overlay flag
 				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uFlag, 1, flag);
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD SUPPLEMENTAL MODELS
-//-----------------------------------------------------------------------------
-				
+				// skinning bases
+				currentDemoProgram = demoState->prog_drawTangentBasis_skin;
+				a3shaderProgramActivate(currentDemoProgram->program);
+				a3shaderUniformBufferActivate(demoState->ubo_transformBlend, 1);
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, projectionMat.mm);
+				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor0, hueCount, rgba4->v);
+				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, a3vec4_one.v);
+				a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uSize, 1, size);
+				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uFlag, 1, flag);
 
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+				for (currentSceneObject = scene->obj_skeleton, endSceneObject = scene->obj_skeleton;
+					currentSceneObject <= endSceneObject; ++currentSceneObject)
+				{
+					j = (a3ui32)(currentSceneObject - scene->object_scene);
+					modelMat = scene->sceneGraphState->objectSpace->hpose_base[currentSceneObject->sceneGraphIndex].transformMat;
+					a3real4x4Product(modelViewMat.m, viewMat.m, modelMat.m);
+					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
+					a3scene_quickInvertTranspose_internal(modelViewMat.m);
+					modelViewMat.v3 = a3vec4_zero;
+					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
+					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
+					i = (a3ui32)((a3vec4*)purple - rgba4);
+					a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &i);
+					a3vertexDrawableActivateAndRender(demoState->draw_character_skin);
+					i = (a3ui32)((a3vec4*)lime - rgba4);
+					a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &i);
+					a3vertexDrawableActivateAndRender(demoState->draw_character_skin_alt);
+				}
 
 				// morphing bases
 				currentDemoProgram = demoState->prog_drawTangentBasis_morph5;
@@ -688,7 +723,7 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
 					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
 					a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &i);
-					a3vertexDrawableActivateAndRender(currentDrawable);
+					//a3vertexDrawableActivateAndRender(currentDrawable);
 				}
 			}
 
@@ -709,15 +744,27 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 		// hidden volumes
 		if (demoState->displayHiddenVolumes)
 		{
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: DRAW SKELETON
-//-----------------------------------------------------------------------------
-			
+			const a3_HierarchyState* currentHierarchyState;
+			const a3_Hierarchy* currentHierarchy;
 
+			// set up to draw skeleton
+			currentDemoProgram = demoState->prog_drawColorUnif_instanced;
+			a3shaderProgramActivate(currentDemoProgram->program);
+			currentHierarchyState = scene->hierarchyState_skel_final;
+			currentHierarchy = currentHierarchyState->hierarchy;
 
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+			// draw skeletal joints
+			a3shaderUniformBufferActivate(demoState->ubo_transformMVP, 0);
+			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, rose);
+			currentDrawable = demoState->draw_node;
+			a3vertexDrawableActivateAndRenderInstanced(currentDrawable, currentHierarchy->numNodes);
+
+			// draw bones
+			a3shaderProgramActivate(currentDemoProgram->program);
+			a3shaderUniformBufferActivate(demoState->ubo_transformMVPB, 0);
+			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, sky);
+			currentDrawable = demoState->draw_link;
+			a3vertexDrawableActivateAndRenderInstanced(currentDrawable, currentHierarchy->numNodes);
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-3: DRAW HELPERS
@@ -729,15 +776,15 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 //****END-TO-DO-PREP-3
 //-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: DRAW SKELETON ADDITIONAL
-//-----------------------------------------------------------------------------
-			
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+			// draw skeletal joint orientations
+			if (demoState->displayObjectAxes)
+			{
+				currentDemoProgram = demoState->prog_drawColorAttrib_instanced;
+				a3shaderProgramActivate(currentDemoProgram->program);
+				a3shaderUniformBufferActivate(demoState->ubo_transformMVP, 0);
+				currentDrawable = demoState->draw_axes;
+				a3vertexDrawableActivateAndRenderInstanced(currentDrawable, currentHierarchy->numNodes);
+			}
 		}
 
 
@@ -758,7 +805,7 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 		// individual objects (based on scene graph)
 		if (demoState->displayObjectAxes)
 		{
-			for (currentSceneObject = scene->obj_teapot, endSceneObject = scene->obj_teapot;
+			for (currentSceneObject = scene->obj_skeleton_ctrl, endSceneObject = scene->obj_skeleton_ctrl;
 				currentSceneObject <= endSceneObject;
 				++currentSceneObject)
 			{

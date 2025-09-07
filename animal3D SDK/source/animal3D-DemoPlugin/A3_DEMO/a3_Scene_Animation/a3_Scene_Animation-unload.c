@@ -47,15 +47,13 @@ void a3animation_unload(a3_DemoState const* demoState, a3_Scene_Animation* scene
 //****END-TO-DO-PREP-4
 //-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: UNLOAD SKELETAL
-//-----------------------------------------------------------------------------
-	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+	// release skeleton and related assets
+	a3ui32 i, j;
+	a3ui32 const n_hierarchy = sizeof(scene->hierarchyState_skel) / sizeof(a3_HierarchyState);
+	for (i = 0, j = n_hierarchy; i < j; ++i)
+		a3hierarchyStateRelease(scene->hierarchyState_skel + i);
+	a3hierarchyPoseGroupRelease(scene->hierarchyPoseGroup_skel);
+	a3hierarchyRelease(scene->hierarchy_skel);
 
 	// scene graph
 	a3hierarchyStateRelease(scene->sceneGraphState);

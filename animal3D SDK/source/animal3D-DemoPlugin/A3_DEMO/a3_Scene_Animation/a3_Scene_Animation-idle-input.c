@@ -134,15 +134,10 @@ void a3animation_input(a3_DemoState* demoState, a3_Scene_Animation* scene, a3f64
 		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
 		break;
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-2: ADD OBJECTS
-//-----------------------------------------------------------------------------
-	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-2
-//-----------------------------------------------------------------------------
+	case animation_ctrl_character:
+		sceneObject = scene->obj_skeleton_ctrl + scene->ctrl_target - animation_ctrl_character;
+		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
+		break;
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-3: ADD OBJECTS

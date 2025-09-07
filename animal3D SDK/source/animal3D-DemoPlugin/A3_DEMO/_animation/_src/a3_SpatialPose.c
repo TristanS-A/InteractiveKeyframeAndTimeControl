@@ -98,13 +98,13 @@ a3i32 a3spatialPoseDeconcat(a3_SpatialPose* spatialPose_out, const a3_SpatialPos
 	if (spatialPose_out && spatialPose_lhs && spatialPose_rhs)
 	{
 //-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
+//****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 		
 
 
 //-----------------------------------------------------------------------------
-//****END-TO-DO-PROJECT-3
+//****END-TO-DO-PROJECT-2
 //-----------------------------------------------------------------------------
 	}
 	return -1;
