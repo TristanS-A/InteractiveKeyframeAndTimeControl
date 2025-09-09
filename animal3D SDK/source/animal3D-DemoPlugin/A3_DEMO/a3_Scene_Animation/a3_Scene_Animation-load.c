@@ -185,7 +185,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	a3ui32 ammountOfsamples = 6;
 	FILE* fileptr = fopen("../../../../resource/animdata/teapot.txt", "r");
 
-	//Tristan's and Will coded a preliminary reading of file indipendently to determin amount of samples per clip (one clip for now), but decided to go with Tristan's due to using fgets instead of fgetc
+	//Tristan and Will coded a preliminary reading of file indipendently to determin amount of samples per clip (one clip for now), but decided to go with Tristan's due to using fgets instead of fgetc
 	char lineBuffer[256];
 	while (!feof(fileptr))
 	{
