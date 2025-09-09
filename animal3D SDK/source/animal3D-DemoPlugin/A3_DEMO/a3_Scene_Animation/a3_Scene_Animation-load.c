@@ -176,31 +176,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 //****END-TO-DO-PREP-3
 //-----------------------------------------------------------------------------
 
-	FILE* fileptr = fopen("../../../../resource/animdata/teapot.txt" ,"r");
-	if (fileptr != NULL)
-	{
-		char buffer[8];
-		double test;
-		double test2;
-		char startChar;
-		char transFrwd;
-		char transBkwd;
-		char comment[50];
-
-		
-		
-		while (fscanf(fileptr, "%c %s %lf %lf %c %c %c", &startChar, &buffer, &test, &test2, &transFrwd, &transBkwd, &comment) != EOF)
-		{
-				printf("test %lf\t", test);
-				fgets(comment, 50, fileptr);
-		}
-
-		
-	}	
-	else
-	{
-		printf("AAAAAAAAAAAA");
-	}
+	
 	
 	// scene graph state
 	scene->sceneGraphState->hierarchy = 0;
@@ -234,21 +210,89 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		a3ui32 const additionalSampleStart = hierarchySampleCount;
 		a3ui32 const additionalKeyframeStart = hierarchyKeyframeCount;
 		a3ui32 const additionalClipStart = hierarchyClipCount;
-		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 0],   0, fps_additional);//0.0s
-		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 1],  15, fps_additional);//0.5s
-		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 2],  75, fps_additional);//2.5s
-		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 3], 105, fps_additional);//3.5s
-		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 4], 120, fps_additional);//4.0s
-		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 5], 150, fps_additional);//5.0s
+
+		char name[8];
+		double clipDuration;
+		double startTime;
+		char startChar;
+		char transFrwd;
+		a3_ClipTransitionFlag fwrdFlag = a3clip_stopFlag;
+		char transBkwd;
+		a3_ClipTransitionFlag bkwdFlag = a3clip_stopFlag;
+		char hash;
+		char comment[50];
+		a3ui32 sampleCount = 0;
+		float* ptrClipTime = NULL;
+		FILE* fileptr = fopen("../../../../resource/animdata/teapot.txt", "r");
+
+		while (fscanf(fileptr, "%c %s %lf %lf %c %c %c", &startChar, &name, &clipDuration, &startTime, &transFrwd, &transBkwd, &hash) != EOF)
+		{
+			printf("test %lf\t", startTime);
+			fgets(comment, 50, fileptr);
+
+			//read flag
+			switch (transFrwd)
+			{
+			case '|':
+				fwrdFlag = a3clip_stopFlag;
+				break;
+			case '<':
+				fwrdFlag = a3clip_reverseFlag;
+				break;
+			case '>>':
+				fwrdFlag = a3clip_playFlag;
+				break;
+			case '-':
+				break;
+			default:
+				fwrdFlag = a3clip_clipFlag;
+			}
+			switch (transBkwd)
+			{
+			case '|':
+				bkwdFlag = a3clip_stopFlag;
+				break;
+			case '<':
+				bkwdFlag = a3clip_reverseFlag;
+				break;
+			case '>>':
+				bkwdFlag = a3clip_playFlag;
+				break;
+			case '-':
+				break;
+			default:
+				bkwdFlag = a3clip_clipFlag;
+			}
+
+			a3sampleInit(&scene->clipPool->sample[additionalSampleStart + sampleCount], (a3i32)startTime, fps_additional);//0.0s
+
+			if (startChar == '!')
+			{
+				sampleCount = (a3ui32)0;
+			}
+			else
+			{
+				sampleCount++;
+			}
+
+		}
+		fclose(fileptr);
+
 		for (j = 0; j < additionalKeyframeCount; ++j)
 			a3keyframeInit(&scene->clipPool->keyframe[additionalKeyframeStart + j],
 				&scene->clipPool->sample[additionalSampleStart + j], &scene->clipPool->sample[additionalSampleStart + j + 1], fps_additional);
 
 		j = additionalClipStart;
-		a3clipInit(&scene->clipPool->clip[j], "teapot_morph",
+		/*a3clipInit(&scene->clipPool->clip[j], "teapot_morph",
 			&scene->clipPool->keyframe[additionalKeyframeStart + 0],
 			&scene->clipPool->keyframe[additionalKeyframeStart + 4]);
+		a3clipCalculateDuration(scene->clipPool, j, fps_additional);*/
+
+		a3clipInitWithTransitions(&scene->clipPool->clip[j], "teapot_morph",
+			&scene->clipPool->keyframe[additionalKeyframeStart + 0],
+			&scene->clipPool->keyframe[additionalKeyframeStart + 4], fwrdFlag, bkwdFlag);
 		a3clipCalculateDuration(scene->clipPool, j, fps_additional);
+
 
 		j = a3clipGetIndexInPool(scene->clipPool, "teapot_morph");
 		a3clipControllerInit(scene->clipCtrl_morph, "teapot_ctrl_morph", scene->clipPool, j, rate_additional, fps_additional);

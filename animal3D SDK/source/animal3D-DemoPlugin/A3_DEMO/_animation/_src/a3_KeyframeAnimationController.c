@@ -155,7 +155,7 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		//Makes sure it is the current keyframe
 		while (clipCtrl->clipTime_sec >= keyFrameEndTime_T1 || clipCtrl->clipTime_sec < keyFrameStartTime_T0)
 		{
-			clipCtrl->playback_sec > 0 ? clipCtrl->keyframeIndex++ : clipCtrl->keyframeIndex--;
+			clipCtrl->clipPool->clip->keyframeDirection > 0 ? clipCtrl->keyframeIndex++ : clipCtrl->keyframeIndex--;
 
 			if ((a3i32)clipCtrl->keyframeIndex < clipCtrl->clip->keyframeCount)
 			{	

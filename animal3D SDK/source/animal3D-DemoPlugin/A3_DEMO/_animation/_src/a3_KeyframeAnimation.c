@@ -137,6 +137,25 @@ a3i32 a3clipInit(a3_Clip* clip_out, const a3byte clipName[a3keyframeAnimation_na
 	return -1;
 }
 
+//for transitions its a copy i just changed one in put - Will
+a3i32 a3clipInitWithTransitions(a3_Clip* clip_out, const a3byte clipName[a3keyframeAnimation_nameLenMax], a3_Keyframe const* keyframe_first, a3_Keyframe const* keyframe_final, a3_ClipTransitionFlag fwrdTrans, a3_ClipTransitionFlag bkwrdTrans)
+{
+	if (clip_out && clip_out->index >= 0 && keyframe_first && keyframe_first->index >= 0 && keyframe_final && keyframe_final->index >= 0)
+	{
+		strncpy(clip_out->name, A3_CLIP_SEARCHNAME, a3keyframeAnimation_nameLenMax);
+		clip_out->keyframeIndex_first = keyframe_first->index;
+		clip_out->keyframeIndex_final = keyframe_final->index;
+		clip_out->keyframeCount = clip_out->keyframeIndex_final - clip_out->keyframeIndex_first;
+		clip_out->keyframeDirection = a3sgn(clip_out->keyframeCount);
+		clip_out->keyframeCount = 1 + clip_out->keyframeCount * clip_out->keyframeDirection;
+		//CLIP TRANSITIONS
+		a3clipTransitionInit(clip_out->transitionForward, fwrdTrans, 0, clip_out);
+		a3clipTransitionInit(clip_out->transitionReverse, bkwrdTrans, 0, clip_out);
+		return clip_out->index;
+	}
+	return -1;
+}
+
 // get clip index from pool
 a3i32 a3clipGetIndexInPool(const a3_ClipPool* clipPool, const a3byte clipName[a3keyframeAnimation_nameLenMax])
 {

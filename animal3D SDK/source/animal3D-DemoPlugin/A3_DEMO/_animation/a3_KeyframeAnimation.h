@@ -161,6 +161,8 @@ a3i32 a3clipTransitionInit(a3_ClipTransition* transition, a3_ClipTransitionFlag 
 
 // initialize clip with first and last indices
 a3i32 a3clipInit(a3_Clip* clip_out, const a3byte clipName[a3keyframeAnimation_nameLenMax], a3_Keyframe const* keyframe_first, a3_Keyframe const* keyframe_final);
+//init clip with a transtions from a file
+a3i32 a3clipInitWithTransitions(a3_Clip* clip_out, const a3byte clipName[a3keyframeAnimation_nameLenMax], a3_Keyframe const* keyframe_first, a3_Keyframe const* keyframe_final, a3_ClipTransitionFlag fwrdTrans, a3_ClipTransitionFlag bkwrdTrans);
 
 // get clip index from pool
 a3i32 a3clipGetIndexInPool(const a3_ClipPool* clipPool, const a3byte clipName[a3keyframeAnimation_nameLenMax]);
@@ -170,6 +172,9 @@ a3i32 a3clipCalculateDuration(a3_ClipPool const* clipPool, const a3ui32 clipInde
 
 // calculate keyframes' durations by distributing clip's duration
 a3i32 a3clipDistributeDuration(a3_ClipPool const* clipPool, const a3ui32 clipIndex, const a3f64 playback_stepPerSec);
+
+
+
 
 
 //-----------------------------------------------------------------------------
