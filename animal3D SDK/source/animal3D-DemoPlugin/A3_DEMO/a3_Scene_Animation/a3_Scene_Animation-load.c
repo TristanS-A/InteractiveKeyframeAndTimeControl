@@ -27,10 +27,11 @@
 */
 
 //-----------------------------------------------------------------------------
-
+#pragma once
 #include "../a3_Scene_Animation.h"
 
 #include "../a3_DemoState.h"
+#include <stdio.h>
 
 
 //-----------------------------------------------------------------------------
@@ -175,6 +176,32 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 //****END-TO-DO-PREP-3
 //-----------------------------------------------------------------------------
 
+	FILE* fileptr = fopen("../../../../resource/animdata/teapot.txt" ,"r");
+	if (fileptr != NULL)
+	{
+		char buffer[8];
+		double test;
+		double test2;
+		char startChar;
+		char transFrwd;
+		char transBkwd;
+		char comment[50];
+
+		
+		
+		while (fscanf(fileptr, "%c %s %lf %lf %c %c %c", &startChar, &buffer, &test, &test2, &transFrwd, &transBkwd, &comment) != EOF)
+		{
+				printf("test %lf\t", test);
+				fgets(comment, 50, fileptr);
+		}
+
+		
+	}	
+	else
+	{
+		printf("AAAAAAAAAAAA");
+	}
+	
 	// scene graph state
 	scene->sceneGraphState->hierarchy = 0;
 	a3hierarchyStateCreate(scene->sceneGraphState, scene->sceneGraph);
@@ -201,6 +228,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 
 	// initialize additional clips and controllers
 	{
+		
 		a3ui32 const rate_additional = 30;
 		a3f64 const fps_additional = (a3f64)rate_additional;
 		a3ui32 const additionalSampleStart = hierarchySampleCount;

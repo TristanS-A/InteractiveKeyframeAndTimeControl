@@ -64,7 +64,7 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		}
 
 		////Updates clip time --> nice touch for scaling with time!
-		clipCtrl->clipTime_sec += dt * clipCtrl->playback_sec;
+		clipCtrl->clipTime_sec += dt * clipCtrl->playback_sec * clipCtrl->clipPool->clip->keyframeDirection;
 
 		a3f64 clipDuration = (clipCtrl->clip->duration_sec);
 
@@ -98,7 +98,8 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 					//Impliment ping pong
 					//clipCtrl->keyframeIndex = --clipCtrl->keyframeIndex;
 					clipCtrl->clipTime_sec = clipDuration - overflowTime;
-					clipCtrl->playback_sec *= -(a3i32)1;
+					//clipCtrl->playback_sec *= -(a3i32)1;
+					clipCtrl->clipPool->clip->keyframeDirection *= -1;
 					break;
 				default:
 					//Default is loop
@@ -133,8 +134,9 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 					break;
 				case a3clip_reverseFlag:
 					//Impliment ping pong
-					clipCtrl->clipTime_sec = (clipDuration - clipDuration)+ overflowTime;
-					clipCtrl->playback_sec *= -1;
+					clipCtrl->clipTime_sec = (clipDuration - clipDuration) + overflowTime;
+					//clipCtrl->playback_sec *= -1;
+					clipCtrl->clipPool->clip->keyframeDirection *= -1;
 					break;
 				default:
 					//Default is loop
