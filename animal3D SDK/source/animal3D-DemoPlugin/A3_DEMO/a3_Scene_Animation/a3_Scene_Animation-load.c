@@ -182,9 +182,25 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	scene->sceneGraphState->hierarchy = 0;
 	a3hierarchyStateCreate(scene->sceneGraphState, scene->sceneGraph);
 
+	a3ui32 ammountOfsamples = 6;
+	FILE* fileptr = fopen("../../../../resource/animdata/teapot.txt", "r");
+	char c;
+	while ((c = fgetc(fileptr) != EOF))
+	{
+		if (c == '@')
+		{
+			ammountOfsamples++;
+		}
+		else if (c == '!')
+		{
+			ammountOfsamples = 0;
+		}
+	}
+	rewind(fileptr);
+	
 	// initialize clip pool
 	a3ui32 const hierarchyKeyframeCount = hierarchySampleCount - 1;
-	a3ui32 const additionalSampleCount = 6;
+	a3ui32 const additionalSampleCount = ammountOfsamples;
 	a3ui32 const additionalKeyframeCount = additionalSampleCount - 1;
 	a3ui32 const additionalClipCount = 1;
 	a3clipPoolCreate(scene->clipPool,
@@ -223,7 +239,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		char comment[50];
 		a3ui32 sampleCount = 0;
 		float* ptrClipTime = NULL;
-		FILE* fileptr = fopen("../../../../resource/animdata/teapot.txt", "r");
+		fileptr = fopen("../../../../resource/animdata/teapot.txt", "r");
 
 		while (fscanf(fileptr, "%c %s %lf %lf %c %c %c", &startChar, &name, &clipDuration, &startTime, &transFrwd, &transBkwd, &hash) != EOF)
 		{
@@ -283,7 +299,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 				&scene->clipPool->sample[additionalSampleStart + j], &scene->clipPool->sample[additionalSampleStart + j + 1], fps_additional);
 
 		j = additionalClipStart;
-		/*a3clipInit(&scene->clipPool->clip[j], "teapot_morph",
+	/*	a3clipInit(&scene->clipPool->clip[j], "teapot_morph",
 			&scene->clipPool->keyframe[additionalKeyframeStart + 0],
 			&scene->clipPool->keyframe[additionalKeyframeStart + 4]);
 		a3clipCalculateDuration(scene->clipPool, j, fps_additional);*/
