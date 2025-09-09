@@ -184,19 +184,24 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 
 	a3ui32 ammountOfsamples = 6;
 	FILE* fileptr = fopen("../../../../resource/animdata/teapot.txt", "r");
-	char c;
-	while ((c = fgetc(fileptr) != EOF))
+
+	//Tristan's coded preliminary reading of file to determin amount of samples per clip (one clip for now)
+	char lineBuffer[256];
+	while (!feof(fileptr))
 	{
-		if (c == '@')
+		fgets(lineBuffer, 2, fileptr);
+		if (lineBuffer[0] == '@')
 		{
 			ammountOfsamples++;
 		}
-		else if (c == '!')
+		else if (lineBuffer[0] == '!')
 		{
+			//Do other processing stuff for a new clip for multiple clips later probobly
 			ammountOfsamples = 0;
 		}
 	}
-	rewind(fileptr);
+
+	fseek(fileptr, 0, SEEK_SET);
 	
 	// initialize clip pool
 	a3ui32 const hierarchyKeyframeCount = hierarchySampleCount - 1;
@@ -227,6 +232,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		a3ui32 const additionalKeyframeStart = hierarchyKeyframeCount;
 		a3ui32 const additionalClipStart = hierarchyClipCount;
 
+		//Will coded the reading of the data in the file
 		char name[8];
 		double clipDuration;
 		double startTime;

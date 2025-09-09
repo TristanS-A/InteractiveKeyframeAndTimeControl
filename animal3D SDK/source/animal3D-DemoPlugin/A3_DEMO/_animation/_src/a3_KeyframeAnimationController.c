@@ -57,19 +57,19 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 //****TO-DO-ANIM-PROJECT-1: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 		
-		////Handles pause
-		if (dt == 0)
+		////Handles pause - Tristan
+		if (dt == 0 || clipCtrl->playback_sec == 0 || clipCtrl->clip->keyframeDirection == 0)
 		{
 			return 0;
 		}
 
-		////Updates clip time --> nice touch for scaling with time!
+		////Updates clip time --> nice touch for scaling with time! - Tristan created and Will refactored/imroved
 		clipCtrl->clipTime_sec += dt * clipCtrl->playback_sec * clipCtrl->clipPool->clip->keyframeDirection;
 
+		//Will
 		a3f64 clipDuration = (clipCtrl->clip->duration_sec);
 
-		////Handles transitions
-
+		////Handles transitions - Tristan coded switches and Stop and Loop transitions. Will coded Ping Pong.
 		//For forward transition if clip time exceeds clip duration
 		if (clipCtrl->clipTime_sec > clipDuration)
 		{
@@ -84,13 +84,15 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			switch (clipCtrl->clip->transitionForward[0].flag)
 			{
 				case a3clip_stopFlag:
+					//Stop
 					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
 					clipCtrl->clipTime_sec = clipDuration;
 					clipCtrl->keyframeParam = 1.0;
 					clipCtrl->clipParam = 1.0;
 					return 0;
 					break;
-				case a3clip_playFlag:
+				case a3clip_playFlag: 
+					//Loop
 					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
 					clipCtrl->clipTime_sec = overflowTime;
 					break;
@@ -122,6 +124,7 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			switch (clipCtrl->clip->transitionReverse[0].flag)
 			{
 				case a3clip_stopFlag:
+					//Stop
 					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
 					clipCtrl->clipTime_sec = 0;
 					clipCtrl->keyframeParam = 0;
@@ -129,6 +132,7 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 					return 0;
 					break;
 				case a3clip_playFlag:
+					//Loop
 					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
 					clipCtrl->clipTime_sec = clipDuration - overflowTime;
 					break;
@@ -148,11 +152,11 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 
 		////Finds current keyframe based on transitions and updated clip time
 
-		//Picks a starting keyframe
+		//Picks a starting keyframe - Tristan
 		a3f64 keyFrameStartTime_T0 = clipCtrl->clipPool->sample[clipCtrl->keyframe[clipCtrl->keyframeIndex].sampleIndex0].time_sec;
 		a3f64 keyFrameEndTime_T1 = clipCtrl->clipPool->sample[clipCtrl->keyframe[clipCtrl->keyframeIndex].sampleIndex1].time_sec;
 
-		//Makes sure it is the current keyframe
+		//Makes sure it is the current keyframe Tristan created and refactored/imroved by Will and Tristan
 		while (clipCtrl->clipTime_sec >= keyFrameEndTime_T1 || clipCtrl->clipTime_sec < keyFrameStartTime_T0)
 		{
 			clipCtrl->clipPool->clip->keyframeDirection > 0 ? clipCtrl->keyframeIndex++ : clipCtrl->keyframeIndex--;
@@ -167,7 +171,7 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			
 		}
 
-		////Gets normalized time for current keyframe and clip
+		////Gets normalized time for current keyframe and clip - Base created by Tristan and refactored/imroved by Will and Tristan
 		clipCtrl->keyframeParam = (clipCtrl->clipTime_sec - keyFrameStartTime_T0) * clipCtrl->keyframe[clipCtrl->keyframeIndex].durationInv;
 		clipCtrl->clipParam = clipCtrl->clip->duration_sec * clipCtrl->clip->durationInv;
 
